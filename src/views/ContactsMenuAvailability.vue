@@ -91,7 +91,6 @@ export default {
 	methods: {
 		close() {
 			this.$destroy();
-			this.$el.parentNode.removeChild(this.$el);
 		},
 	},
 }
