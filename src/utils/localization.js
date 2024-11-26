@@ -24,11 +24,10 @@ const getLangConfigForVue2DatePicker = (momentLocale) => {
 	const dateFormat = moment.localeData(momentLocale)
 		.longDateFormat('L')
 		.toUpperCase()
-	const months = getMonthNames()
 
 	return {
 		formatLocale: {
-			months,
+			months: getMonthNames(),
 			monthsShort: getMonthNamesShort(),
 			weekdays: getDayNames(),
 			weekdaysShort: getDayNamesShort(),
@@ -40,8 +39,7 @@ const getLangConfigForVue2DatePicker = (momentLocale) => {
 			isPM: moment.localeData(momentLocale).isPM,
 		},
 		yearFormat: 'YYYY',
-		months, // Use long names in month picker
-		monthFormat: 'MMMM',
+		monthFormat: 'MMM',
 		monthBeforeYear: dateFormat.indexOf('M') < dateFormat.indexOf('Y'),
 	}
 }
