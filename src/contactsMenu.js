@@ -9,7 +9,9 @@ import '../css/calendar.scss'
 
 import { getRequestToken } from '@nextcloud/auth'
 import { linkTo } from '@nextcloud/router'
-import { registerContactsMenuHook } from '@nextcloud/vue'
+import { translate as t } from '@nextcloud/l10n'
+import { registerContactsMenuAction } from '@nextcloud/vue'
+import CalendarBlankSvg from '@mdi/svg/svg/calendar-blank.svg'
 
 // CSP config for webpack dynamic chunk loading
 // eslint-disable-next-line
@@ -22,42 +24,51 @@ __webpack_nonce__ = btoa(getRequestToken())
 // eslint-disable-next-line
 __webpack_public_path__ = linkTo('calendar', 'js/')
 
-registerContactsMenuHook('calendar-availability', async (args) => {
-	const { default: Vue } = await import('vue')
-	const { default: ContactsMenuAvailability } = await import('./views/ContactsMenuAvailability.vue')
-	const { translate, translatePlural } = await import('@nextcloud/l10n')
-	const { default: ClickOutside } = await import('vue-click-outside')
-	const { default: VTooltip } = await import('v-tooltip')
-	const { default: VueShortKey } = await import('vue-shortkey')
-	const { createPinia, PiniaVuePlugin } = await import('pinia')
+// Decode calendar icon (inline data url -> raw svg)
+const CalendarBlankSvgRaw = atob(CalendarBlankSvg.split(',')[1])
 
-	Vue.use(PiniaVuePlugin)
-	const pinia = createPinia()
+registerContactsMenuAction({
+	id: 'calendar-availability',
+	displayName: () => t('calendar', 'Show availability'),
+	iconSvg: () => CalendarBlankSvgRaw,
+	enabled: (entry) => entry.isUser,
+	callback: async (args) => {
+		const { default: Vue } = await import('vue')
+		const { default: ContactsMenuAvailability } = await import('./views/ContactsMenuAvailability.vue')
+		const { default: ClickOutside } = await import('vue-click-outside')
+		const { default: VTooltip } = await import('v-tooltip')
+		const { default: VueShortKey } = await import('vue-shortkey')
+		const { createPinia, PiniaVuePlugin } = await import('pinia')
+		const { translatePlural } = await import('@nextcloud/l10n')
 
-	// Register global components
-	Vue.directive('ClickOutside', ClickOutside)
-	Vue.use(VTooltip)
-	Vue.use(VueShortKey, { prevent: ['input', 'textarea'] })
+		Vue.use(PiniaVuePlugin)
+		const pinia = createPinia()
 
-	Vue.prototype.$t = translate
-	Vue.prototype.$n = translatePlural
+		// Register global components
+		Vue.directive('ClickOutside', ClickOutside)
+		Vue.use(VTooltip)
+		Vue.use(VueShortKey, { prevent: ['input', 'textarea'] })
 
-	// The nextcloud-vue package does currently rely on t and n
-	Vue.prototype.t = translate
-	Vue.prototype.n = translatePlural
+		Vue.prototype.$t = t
+		Vue.prototype.$n = translatePlural
 
-	// Append container element to the body to mount the vm at
-	const el = document.createElement('div')
-	document.body.appendChild(el)
+		// The nextcloud-vue package does currently rely on t and n
+		Vue.prototype.t = t
+		Vue.prototype.n = translatePlural
 
-	const View = Vue.extend(ContactsMenuAvailability)
-	const vm = new View({
-		propsData: {
-			userId: args.uid,
-			userDisplayName: args.fullName,
-			userEmail: args.emailAddresses[0],
-		},
-		pinia,
-	})
-	vm.$mount(el)
+		// Append container element to the body to mount the vm at
+		const el = document.createElement('div')
+		document.body.appendChild(el)
+
+		const View = Vue.extend(ContactsMenuAvailability)
+		const vm = new View({
+			propsData: {
+				userId: args.uid,
+				userDisplayName: args.fullName,
+				userEmail: args.emailAddresses[0],
+			},
+			pinia,
+		})
+		vm.$mount(el)
+	},
 })
