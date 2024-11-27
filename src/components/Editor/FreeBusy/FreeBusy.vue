@@ -83,7 +83,7 @@
 			</div>
 			<FullCalendar ref="freeBusyFullCalendar"
 				:options="options" />
-			<div class="modal__content__footer">
+			<div v-if="!disableFindTime" class="modal__content__footer">
 				<div class="modal__content__footer__title">
 					<p v-if="freeSlots">
 						{{ $t('calendar', 'Available times:') }}
@@ -107,8 +107,7 @@
 					<p>{{ formattedCurrentTime }}<span class="modal__content__footer__title__timezone">{{ formattedTimeZone }}</span></p>
 				</div>
 
-				<NcButton v-if="showDoneButton"
-					type="primary"
+				<NcButton type="primary"
 					@click="save">
 					{{ $t('calendar', 'Done') }}
 					<template #icon>
@@ -212,10 +211,10 @@ export default {
 			type: String,
 			required: false,
 		},
-		showDoneButton: {
+		disableFindTime: {
 			type: Boolean,
 			default: false,
-		},
+		}
 	},
 	data() {
 		return {

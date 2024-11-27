@@ -20,7 +20,9 @@ use OCP\AppFramework\Bootstrap\IBootContext;
 use OCP\AppFramework\Bootstrap\IBootstrap;
 use OCP\AppFramework\Bootstrap\IRegistrationContext;
 use OCP\Collaboration\Reference\RenderReferenceEvent;
+use OCP\ServerVersion;
 use OCP\User\Events\UserDeletedEvent;
+use OCP\Util;
 use function method_exists;
 
 class Application extends App implements IBootstrap {
@@ -51,15 +53,19 @@ class Application extends App implements IBootstrap {
 		$context->registerEventListener(RenderReferenceEvent::class, CalendarReferenceListener::class);
 
 		$context->registerNotifierService(Notifier::class);
-
-		// TODO: Come up with a better way to load this on demand.
-		//       Then again, the contacts menu/avatar is potentially shown everywhere ...
-		\OCP\Util::addScript(self::APP_ID, 'calendar-contacts-menu');
 	}
 
 	/**
 	 * @inheritDoc
 	 */
 	public function boot(IBootContext $context): void {
+		// TODO: drop condition once we only support Nextcloud >= 31
+		/** @var ServerVersion $serverVersion */
+		$serverVersion = $context->getServerContainer()->get(ServerVersion::class);
+		if ($serverVersion->getMajorVersion() >= 31) {
+			// The contacts menu/avatar is potentially shown everywhere so an event based loading
+			// mechanism doesn't make sense here
+			Util::addScript(self::APP_ID, 'calendar-contacts-menu');
+		}
 	}
 }

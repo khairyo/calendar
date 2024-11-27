@@ -10,6 +10,7 @@
 		:end-date="endDate"
 		:organizer="organizer"
 		:attendees="attendees"
+		:disable-find-time="true"
 		@add-attendee="addAttendee"
 		@remove-attendee="removeAttendee"
 		@close="close" />
@@ -68,11 +69,9 @@ export default {
 			return new Date()
 		},
 		endDate() {
-			const date = this.startDate
-			date.setSeconds(0)
-			date.setMinutes(0)
-			date.setHours(0)
-			date.setDate(date.getDate() + 1)
+			// Let's assign a slot of one hour as a default for now
+			const date = new Date(this.startDate)
+			date.setHours(date.getHours() + 1)
 			return date
 		},
 		organizer() {
