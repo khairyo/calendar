@@ -10,18 +10,22 @@
 		:end-date="endDate"
 		:organizer="organizer"
 		:attendees="attendees"
-		@close="close"
-	/>
+		@add-attendee="addAttendee"
+		@remove-attendee="removeAttendee"
+		@close="close" />
 </template>
 
 <script>
 import { mapStores } from 'pinia'
 import usePrincipalsStore from '../store/principals.js'
+import useSettingsStore from '../store/settings.js'
 import {
 	mapAttendeePropertyToAttendeeObject,
 	mapPrincipalObjectToAttendeeObject,
 } from '../models/attendee.js'
+import loadMomentLocalization from '../utils/moment.js'
 import { initializeClientForUserView } from '../services/caldavService.js'
+import getTimezoneManager from '../services/timezoneDataProviderService.js'
 import FreeBusy from '../components/Editor/FreeBusy/FreeBusy.vue'
 import { AttendeeProperty } from '@nextcloud/calendar-js'
 
@@ -45,12 +49,16 @@ export default {
 		},
 	},
 	data() {
+		const initialAttendee = AttendeeProperty.fromNameAndEMail(this.userId, this.userEmail)
+		const attendees = [mapAttendeePropertyToAttendeeObject(initialAttendee)]
+
 		return {
 			initialized: false,
+			attendees,
 		}
 	},
 	computed: {
-		...mapStores(usePrincipalsStore),
+		...mapStores(usePrincipalsStore, useSettingsStore),
 		dialogName() {
 			return t('calendar', 'Availability of {displayName}', {
 				displayName: this.userDisplayName,
@@ -77,20 +85,36 @@ export default {
 				true,
 			)
 		},
-		attendees() {
-			const attendee = AttendeeProperty.fromNameAndEMail(this.userId, this.userEmail, false)
-			return [mapAttendeePropertyToAttendeeObject(attendee)]
-		},
 	},
 	async created() {
-		// Initialize CalDAV service and fetch current user principal
+		this.initSettings()
 		await initializeClientForUserView()
 		await this.principalsStore.fetchCurrentUserPrincipal()
+		getTimezoneManager()
+		await this.loadMomentLocale()
 		this.initialized = true
 	},
 	methods: {
+		initSettings() {
+			this.settingsStore.loadSettingsFromServer({
+				timezone: 'automatic',
+			})
+			this.settingsStore.initializeCalendarJsConfig()
+		},
+		async loadMomentLocale() {
+			const locale = await loadMomentLocalization()
+			this.settingsStore.setMomentLocale({ locale })
+		},
+		addAttendee({ commonName, email }) {
+			this.attendees.push(mapAttendeePropertyToAttendeeObject(
+				AttendeeProperty.fromNameAndEMail(commonName, email)
+			))
+		},
+		removeAttendee({ email }) {
+			this.attendees = this.attendees.filter((att) => att.uri !== email)
+		},
 		close() {
-			this.$destroy();
+			this.$destroy()
 		},
 	},
 }

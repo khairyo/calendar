@@ -5,7 +5,7 @@
 
 <template>
 	<NcDialog size="large"
-		:name="dialogName"
+		:name="dialogName || $t('calendar', 'Availability of attendees, resources and rooms')"
 		@closing="$emit('close')">
 		<div class="modal__content modal--scheduler">
 			<div v-if="loadingIndicator" class="loading-indicator">
@@ -210,7 +210,7 @@ export default {
 		},
 		dialogName: {
 			type: String,
-			default: () => $t('calendar', 'Availability of attendees, resources and rooms'),
+			required: false,
 		},
 		showDoneButton: {
 			type: Boolean,
